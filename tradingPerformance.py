@@ -74,7 +74,7 @@ class PerformanceEstimator:
         """
         
         # Compute the PnL
-        self.PnL = self.data["Money"][-1] - self.data["Money"][0]
+        self.PnL = self.data["Money"].iloc[-1] - self.data["Money"].iloc[0]
         return self.PnL
     
 
@@ -90,7 +90,7 @@ class PerformanceEstimator:
         
         # Compute the cumulative return over the entire trading horizon
         cumulativeReturn = self.data['Returns'].cumsum()
-        cumulativeReturn = cumulativeReturn[-1]
+        cumulativeReturn = cumulativeReturn.iloc[-1]
         
         # Compute the time elapsed (in days)
         start = self.data.index[0].to_pydatetime()
@@ -228,18 +228,18 @@ class PerformanceEstimator:
         bad = 0
         profit = 0
         loss = 0
-        index = next((i for i in range(len(self.data.index)) if self.data['Action'][i] != 0), None)
+        index = next((i for i in range(len(self.data.index)) if self.data['Action'].iloc[i] != 0), None)
         if index == None:
             self.profitability = 0
             self.averageProfitLossRatio = 0
             return self.profitability, self.averageProfitLossRatio
-        money = self.data['Money'][index]
+        money = self.data['Money'].iloc[index]
 
         # Monitor the success of each trade over the entire trading horizon
         for i in range(index+1, len(self.data.index)):
-            if(self.data['Action'][i] != 0):
-                delta = self.data['Money'][i] - money
-                money = self.data['Money'][i]
+            if(self.data['Action'].iloc[i] != 0):
+                delta = self.data['Money'].iloc[i] - money
+                money = self.data['Money'].iloc[i]
                 if(delta >= 0):
                     good += 1
                     profit += delta
@@ -248,7 +248,7 @@ class PerformanceEstimator:
                     loss -= delta
 
         # Special case of the termination trade
-        delta = self.data['Money'][-1] - money
+        delta = self.data['Money'].iloc[-1] - money
         if(delta >= 0):
             good += 1
             profit += delta

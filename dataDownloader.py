@@ -261,4 +261,32 @@ class CSVHandler:
                            header=0,
                            index_col='Timestamp',
                            parse_dates=True)
+
+
+    def BrazilianCSVToDataframe(self, path, startingDate=None, endingDate=None):
+        """
+        GOAL: Loading a Brazilian market CSV file into the project dataframe
+              format.
+
+        INPUTS:     - path: Absolute path to the CSV file.
+                    - startingDate: Optional beginning of the trading horizon.
+                    - endingDate: Optional ending of the trading horizon.
+
+        OUTPUTS:    - dataframe: Pandas dataframe loaded and normalized.
+        """
+
+        dataframe = pd.read_csv(path,
+                                header=0,
+                                parse_dates=['Date'])
+
+        dataframe.set_index('Date', inplace=True)
+        dataframe.index.names = ['Timestamp']
+        dataframe = dataframe[['Open', 'High', 'Low', 'Close', 'Volume']]
+
+        if startingDate is not None:
+            dataframe = dataframe.loc[pd.Timestamp(startingDate):]
+        if endingDate is not None:
+            dataframe = dataframe.loc[:pd.Timestamp(endingDate)]
+
+        return dataframe
     

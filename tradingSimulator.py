@@ -38,8 +38,8 @@ from TDQN import TDQN
 
 # Variables defining the default trading horizon
 startingDate = '2012-1-1'
-endingDate = '2020-1-1'
-splitingDate = '2018-1-1'
+endingDate = '2025-03-31'
+splitingDate = '2024-1-1'
 
 # Variables defining the default observation and state spaces
 stateLength = 30
@@ -135,7 +135,14 @@ companies = {
     'Toyota' : '7203.T',
     'Coca Cola' : 'KO',
     'AB InBev' : 'ABI.BR',
-    'Kirin' : '2503.T'
+    'Kirin' : '2503.T',
+    'PETR4' : 'PETR4',
+    'VALE3' : 'VALE3',
+    'CMIG4' : 'CMIG4',
+    'TOTS3' : 'TOTS3',
+    'MOTV3' : 'MOTV3',
+    'RADL3' : 'RADL3',
+    'ITUB4' : 'ITUB4'    
 }
 
 # Dictionary listing the classical trading strategies supported
@@ -280,12 +287,14 @@ class TradingSimulator:
         """
 
         # Artificial trick to assert the continuity of the Money curve
-        ratio = trainingEnv.data['Money'][-1]/testingEnv.data['Money'][0]
+        ratio = trainingEnv.data['Money'].iloc[-1]/testingEnv.data['Money'].iloc[0]
         testingEnv.data['Money'] = ratio * testingEnv.data['Money']
 
         # Concatenation of the training and testing trading dataframes
         dataframes = [trainingEnv.data, testingEnv.data]
         data = pd.concat(dataframes)
+        longTrades = data[data['Action'] == 1.0]
+        shortTrades = data[data['Action'] == -1.0]
 
         # Set the Matplotlib figure and subplots
         fig = plt.figure(figsize=(10, 8))
@@ -293,23 +302,23 @@ class TradingSimulator:
         ax2 = fig.add_subplot(212, ylabel='Capital', xlabel='Time', sharex=ax1)
 
         # Plot the first graph -> Evolution of the stock market price
-        trainingEnv.data['Close'].plot(ax=ax1, color='blue', lw=2)
-        testingEnv.data['Close'].plot(ax=ax1, color='blue', lw=2, label='_nolegend_') 
-        ax1.plot(data.loc[data['Action'] == 1.0].index, 
-                 data['Close'][data['Action'] == 1.0],
+        ax1.plot(trainingEnv.data.index.to_numpy(), trainingEnv.data['Close'].to_numpy(), color='blue', lw=2)
+        ax1.plot(testingEnv.data.index.to_numpy(), testingEnv.data['Close'].to_numpy(), color='blue', lw=2)
+        ax1.plot(longTrades.index.to_numpy(),
+             longTrades['Close'].to_numpy(),
                  '^', markersize=5, color='green')   
-        ax1.plot(data.loc[data['Action'] == -1.0].index, 
-                 data['Close'][data['Action'] == -1.0],
+        ax1.plot(shortTrades.index.to_numpy(),
+             shortTrades['Close'].to_numpy(),
                  'v', markersize=5, color='red')
         
         # Plot the second graph -> Evolution of the trading capital
-        trainingEnv.data['Money'].plot(ax=ax2, color='blue', lw=2)
-        testingEnv.data['Money'].plot(ax=ax2, color='blue', lw=2, label='_nolegend_') 
-        ax2.plot(data.loc[data['Action'] == 1.0].index, 
-                 data['Money'][data['Action'] == 1.0],
+        ax2.plot(trainingEnv.data.index.to_numpy(), trainingEnv.data['Money'].to_numpy(), color='blue', lw=2)
+        ax2.plot(testingEnv.data.index.to_numpy(), testingEnv.data['Money'].to_numpy(), color='blue', lw=2)
+        ax2.plot(longTrades.index.to_numpy(),
+             longTrades['Money'].to_numpy(),
                  '^', markersize=5, color='green')   
-        ax2.plot(data.loc[data['Action'] == -1.0].index, 
-                 data['Money'][data['Action'] == -1.0],
+        ax2.plot(shortTrades.index.to_numpy(),
+             shortTrades['Money'].to_numpy(),
                  'v', markersize=5, color='red')
 
         # Plot the vertical line seperating the training and testing datasets
