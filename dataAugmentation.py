@@ -96,10 +96,12 @@ class DataAugmentation:
         # Application of the stretching/contraction operation
         returns = newTradingEnv.data['Close'].pct_change() * factor
         for i in range(1, len(newTradingEnv.data.index)):
-            newTradingEnv.data['Close'][i] = newTradingEnv.data['Close'][i-1] * (1 + returns[i])
-            newTradingEnv.data['Low'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['Low'][i]/tradingEnv.data['Close'][i]
-            newTradingEnv.data['High'][i] = newTradingEnv.data['Close'][i] * tradingEnv.data['High'][i]/tradingEnv.data['Close'][i]
-            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i-1]
+            idx = newTradingEnv.data.index[i]
+            prev_idx = newTradingEnv.data.index[i-1]
+            newTradingEnv.data.loc[idx, 'Close'] = newTradingEnv.data.loc[prev_idx, 'Close'] * (1 + returns.iloc[i])
+            newTradingEnv.data.loc[idx, 'Low'] = newTradingEnv.data.loc[idx, 'Close'] * tradingEnv.data.loc[idx, 'Low']/tradingEnv.data.loc[idx, 'Close']
+            newTradingEnv.data.loc[idx, 'High'] = newTradingEnv.data.loc[idx, 'Close'] * tradingEnv.data.loc[idx, 'High']/tradingEnv.data.loc[idx, 'Close']
+            newTradingEnv.data.loc[idx, 'Open'] = newTradingEnv.data.loc[prev_idx, 'Close']
 
         # Return the new trading environment generated
         return newTradingEnv
@@ -121,18 +123,21 @@ class DataAugmentation:
 
         # Generation of the new noisy time series
         for i in range(1, len(newTradingEnv.data.index)):
+            idx = newTradingEnv.data.index[i]
+            prev_idx = newTradingEnv.data.index[i-1]
+
             # Generation of artificial gaussian random noises
-            price = newTradingEnv.data['Close'][i]
-            volume = newTradingEnv.data['Volume'][i]
-            priceNoise = np.random.normal(0, stdev*(price/100))
-            volumeNoise = np.random.normal(0, stdev*(volume/100))
+            price = newTradingEnv.data.loc[idx, 'Close']
+            volume = newTradingEnv.data.loc[idx, 'Volume']
+            priceNoise = np.random.normal(0, stdev*(abs(price)/100))
+            volumeNoise = np.random.normal(0, stdev*(abs(volume)/100))
 
             # Addition of the artificial noise generated
-            newTradingEnv.data['Close'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['Low'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['High'][i] *= (1 + priceNoise/100)
-            newTradingEnv.data['Volume'][i] *= (1 + volumeNoise/100)
-            newTradingEnv.data['Open'][i] = newTradingEnv.data['Close'][i-1]
+            newTradingEnv.data.loc[idx, 'Close'] *= (1 + priceNoise/100)
+            newTradingEnv.data.loc[idx, 'Low'] *= (1 + priceNoise/100)
+            newTradingEnv.data.loc[idx, 'High'] *= (1 + priceNoise/100)
+            newTradingEnv.data.loc[idx, 'Volume'] *= (1 + volumeNoise/100)
+            newTradingEnv.data.loc[idx, 'Open'] = newTradingEnv.data.loc[prev_idx, 'Close']
 
         # Return the new trading environment generated
         return newTradingEnv
@@ -158,12 +163,14 @@ class DataAugmentation:
         newTradingEnv.data['High'] = newTradingEnv.data['High'].rolling(window=order).mean()
         newTradingEnv.data['Volume'] = newTradingEnv.data['Volume'].rolling(window=order).mean()
         for i in range(order):
-            newTradingEnv.data['Close'][i] = tradingEnv.data['Close'][i]
-            newTradingEnv.data['Low'][i] = tradingEnv.data['Low'][i]
-            newTradingEnv.data['High'][i] = tradingEnv.data['High'][i]
-            newTradingEnv.data['Volume'][i] = tradingEnv.data['Volume'][i]
+            idx = newTradingEnv.data.index[i]
+            newTradingEnv.data.loc[idx, 'Close'] = tradingEnv.data.loc[idx, 'Close']
+            newTradingEnv.data.loc[idx, 'Low'] = tradingEnv.data.loc[idx, 'Low']
+            newTradingEnv.data.loc[idx, 'High'] = tradingEnv.data.loc[idx, 'High']
+            newTradingEnv.data.loc[idx, 'Volume'] = tradingEnv.data.loc[idx, 'Volume']
         newTradingEnv.data['Open'] = newTradingEnv.data['Close'].shift(1)
-        newTradingEnv.data['Open'][0] = tradingEnv.data['Open'][0]
+        first_idx = newTradingEnv.data.index[0]
+        newTradingEnv.data.loc[first_idx, 'Open'] = tradingEnv.data.loc[first_idx, 'Open']
 
         # Return the new trading environment generated
         return newTradingEnv

@@ -42,6 +42,7 @@ best_performance_*.csv
 Data/
 Figures/
 Results/
+runs/
 
 # Visualizations
 *.html
